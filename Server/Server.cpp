@@ -3,6 +3,12 @@
 Server::Server(int port) : _port(port)
 {
 	this->_exit_flag = false;
+
+	if (setenv(ENV_PORT_NAME, std::to_string(port).c_str(), 1))
+	{
+		std::cerr << "Error! Set env failed." << std::endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
 Server::~Server() {}
@@ -36,11 +42,6 @@ void Server::InitServer()
 		exit(EXIT_FAILURE);
 	}
 
-	if (setenv(ENV_PORT_NAME, std::to_string(_port).c_str(), 1) == -1)
-	{
-		std::cerr << "Error! Set env failed." << std::endl;
-		exit(EXIT_FAILURE);
-	}
 	fcntl(_socket, F_SETFL, O_NONBLOCK);
 }
 
@@ -80,20 +81,28 @@ void Server::WaitMsg()
 				if (message == "STOP")
 				{
 					LOG(INFO) << "User: " << _user_fds[i].fd << " - Exit on server";
-					_exit_flag = true;
+					SendStatus(_user_fds[i].fd);
 					_user_reg_status.erase(_user_fds[i].fd);
 					_user_fds.erase(_user_fds.begin() + i);
+					_exit_flag = true;
 				}
 				else if (!_user_reg_status[_user_fds[i].fd] && message == "START")
 				{
 					LOG(INFO) << "User: " << _user_fds[i].fd << " - Registered on server";
 					_user_reg_status[_user_fds[i].fd] = true;
+					SendStatus(_user_fds[i].fd);
 				}
 				else if (_user_reg_status[_user_fds[i].fd])
-					LOG(INFO) << "User: " << _user_fds[i].fd << " msg: " << message;
+				{
+					LOG(INFO) << "User: " << _user_fds[i].fd << "; msg: " << message;
+					SendStatus(_user_fds[i].fd);
+				}
 				else
+				{
 					LOG(ERROR) << "User: " << _user_fds[i].fd \
 						<< " - Violation of the interaction protocol";
+					SendStatus(_user_fds[i].fd);
+				}
 			}
 			_user_fds[i].revents = 0;
 		}
@@ -123,6 +132,12 @@ std::string Server::ReadMsg(int fd)
 	std::string result(message.begin(), message.end());
 
 	return result;
+}
+
+void Server::SendStatus(int fd)
+{
+	char buf = '1';
+	send(fd, &buf, 1, 0);
 }
 
 bool Server::ServerState()

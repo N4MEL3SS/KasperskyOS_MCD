@@ -27,15 +27,25 @@ void Client::InitClient()
 
 void Client::SendMsg(std::string msg)
 {
-	write(_socket, msg.c_str(), msg.size());
+	if (msg.find('\n', 0) == std::string::npos)
+		msg.push_back('\n');
+	const char *msg_char = msg.c_str();
+
+	if (send(_socket, msg_char, strlen(msg_char), 0) > 0)
+	{
+		char buf;
+		while (recv(_socket, &buf, 1, 0) < 0) {}
+	}
 }
 
 void Client::StartMsg()
 {
-	write(_socket, "START\n", 6);
+	SendMsg("START");
+	std::cout << "The user is registered on the server" << std::endl;
 }
 
 void Client::StopMsg()
 {
-	write(_socket, "STOP\n", 5);
+	SendMsg("STOP");
+	std::cout << "All message have been sent" << std::endl;
 }

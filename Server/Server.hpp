@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <cstdlib>
+#include <cctype>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
@@ -36,6 +37,7 @@ class Server
 	void AcceptConnection();
 	void WaitMsg();
 	static std::string ReadMsg(int fd);
+	void SendStatus(int fd);
 };
 
 #endif //SERVER_HPP
