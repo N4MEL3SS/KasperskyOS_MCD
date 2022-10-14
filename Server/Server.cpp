@@ -43,6 +43,7 @@ void Server::InitServer()
 	}
 
 	fcntl(_socket, F_SETFL, O_NONBLOCK);
+	std::cout << "Server is ready to work" << std::endl;
 }
 
 void Server::AcceptConnection()

@@ -1,17 +1,13 @@
+#include <pthread.h>
 #include "Server.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
-int main(int argc, char *argv[])
+int port;
+
+void *server_start(void *)
 {
 	signal(SIGPIPE, SIG_IGN);
-
-	int port;
-
-	if (argc == 2 && std::isdigit(*argv[1]))
-		port = atoi(argv[1]);
-	else
-		port = 6667;
 
 	Server Server(port);
 
@@ -21,6 +17,20 @@ int main(int argc, char *argv[])
 		Server.AcceptConnection();
 		Server.WaitMsg();
 	}
+	return nullptr;
+}
+
+int main(int argc, char *argv[])
+{
+	pthread_t work_thread;
+
+	if (argc == 2 && std::isdigit(*argv[1]))
+		port = atoi(argv[1]);
+	else
+		port = 6667;
+
+	pthread_create(&work_thread, NULL, server_start, &port);
+	pthread_join(work_thread, NULL);
 
 	return 0;
 }
